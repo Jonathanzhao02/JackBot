@@ -86,18 +86,12 @@ public class NeuralLayer{
 			throw new RuntimeException("Dimension mismatch between inputs and weights!");
 		}
 
-		double[] outputs = new double[weights.length];
+        double[] outputs = MatrixOps.matrixMult(weights, inputs);
 
-		for(int i = 0; i < weights.length; i++){
+        for(int i = 0; i < weights.length; i++){
+            outputs[i] += biases[i];
 
-			for(int j = 0; j < inputs.length; j++){
-				outputs[i] += weights[i][j] * inputs[j];
-			}
-
-			outputs[i] += biases[i];
-			outputs[i] = ReLU(outputs[i]);
-
-			switch(activationFunction){
+            switch(activationFunction){
 				case ReLU:
 					outputs[i] = ReLU(outputs[i]);
 					break;
@@ -109,7 +103,7 @@ public class NeuralLayer{
 					break;
 			}
 
-		}
+        }
 
 		return outputs;
 	}
