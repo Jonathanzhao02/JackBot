@@ -10,6 +10,11 @@ public class GenericNetwork{
 	}
 
 	public double[] passThru(double[] inputs){
+
+        if(layers == null){
+            throw new RuntimeException("No layers set!");
+        }
+
 		double[] outputs = inputs;
 
 		for(int i = 0; i < layers.length; i++){
