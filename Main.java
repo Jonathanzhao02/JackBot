@@ -518,7 +518,7 @@ class Child{
 	private static double crossoverChance = 0;
 	private static double maxWeightMagnitude = 0;
 
-	private NeuralNetwork network;
+	private FeedForwardNetwork network;
 	private double fitness = 0;
 
 	public Child clone(){
@@ -537,15 +537,15 @@ class Child{
 	}
 
 	public Child(int[] architecture, int inputs){
-		network = new NeuralNetwork(architecture, inputs);
+		network = new FeedForwardNetwork(architecture, inputs, ActivationFunction.ReLU);
 	}
 
-	public Child(NeuralNetwork network){
+	public Child(FeedForwardNetwork network){
 		this.network = network;
 	}
 
 	public Child(double[][][] weights, double[][] biases, double[][][] hiddenWeights){
-		network = new NeuralNetwork(weights, biases, hiddenWeights);
+		network = new FeedForwardNetwork(weights, biases, ActivationFunction.ReLU);
 	}
 
 	private double[][][] crossWeights(double[][][] weights_1, double[][][] weights_2){
@@ -676,318 +676,10 @@ class Child{
 
 		}
 
-		network = new NeuralNetwork(weights_3, biases_3, hiddenWeights_3);
-	}
-
-	public double[] recurrentPassThru(double[] inputs){
-		return network.recurrentPassThru(inputs);
+		network = new FeedForwardNetwork(weights_3, biases_3, hiddenWeights_3);
 	}
 
 	public void setFitness(double fitness){this.fitness = fitness;}
-	public NeuralNetwork getNetwork(){return network;}
+	public FeedForwardNetwork getNetwork(){return network;}
 	public double getFitness(){return fitness;}
-}
-
-class NeuralNetwork{
-	private static Random rand;
-	private NeuralLayer[] layers;
-
-	public static void setRandom(Random rand){
-		NeuralNetwork.rand = rand;
-	}
-
-	private boolean layersMatch(){
-		int numInputs;
-		int numOutputs = layers[0].getBiases().length;
-		boolean match = true;
-
-		for(int i = 1; i < layers.length; i++){
-			numOutputs = layers[i - 1].getBiases().length;
-			numInputs = layers[i].getWeights()[0].length;
-
-			if(numOutputs != numInputs){
-				match = false;
-			}
-
-		}
-
-		return match;
-	}
-
-	public NeuralNetwork(NeuralLayer[] layers){
-		this.layers = layers;
-
-		if(!layersMatch()){
-			throw new RuntimeException("Dimension mismatch between layers!");
-		}
-
-	}
-
-	public NeuralNetwork(int[] architecture, int inputs){
-		layers = new NeuralLayer[architecture.length];
-		layers[0] = new NeuralLayer(inputs, architecture[0]);
-
-		for(int i = 1; i < architecture.length; i++){
-			layers[i] = new NeuralLayer(architecture[i - 1], architecture[i]);
-		}
-
-		if(!layersMatch()){
-			throw new RuntimeException("Dimension mismatch between layers!");
-		}
-
-	}
-
-	public NeuralNetwork(double[][][] weights, double[][] biases){
-
-		if(weights.length != biases.length){
-			throw new RuntimeException("Dimensions mismatch between weights and biases!");
-		}
-
-		layers = new NeuralLayer[weights.length];
-
-		for(int i = 0; i < weights.length; i++){
-			layers[i] = new NeuralLayer(weights[i], biases[i]);
-		}
-
-		if(!layersMatch()){
-			throw new RuntimeException("Dimension mismatch between layers!");
-		}
-
-	}
-
-	public NeuralNetwork(double[][][] weights, double[][] biases, double[][][] hiddenWeights){
-
-		if(weights.length != biases.length){
-			throw new RuntimeException("Dimensions mismatch between weights and biases!");
-		}
-
-		layers = new NeuralLayer[weights.length];
-
-		for(int i = 0; i < weights.length; i++){
-			layers[i] = new NeuralLayer(weights[i], biases[i], hiddenWeights[i]);
-		}
-
-		if(!layersMatch()){
-			throw new RuntimeException("Dimension mismatch between layers!");
-		}
-
-	}
-
-	public double[] passThru(double[] inputs){
-		double[] outputs = inputs;
-
-		for(int i = 0; i < layers.length; i++){
-			outputs = layers[i].passThru(outputs);
-		}
-
-		return outputs;
-	}
-
-	public double[] recurrentPassThru(double[] inputs){
-		double[] outputs = inputs;
-
-		for(int i = 0; i < layers.length; i++){
-			outputs = layers[i].recurrentPassThru(outputs);
-		}
-
-		return outputs;
-	}
-
-	public void resetHidden(){
-		
-		for(NeuralLayer layer : layers){
-			layer.resetHidden();
-		}
-
-	}
-
-	public double[][][] getWeights(){
-		double[][][] weights = new double[layers.length][][];
-
-		for(int i = 0; i < layers.length; i++){
-			weights[i]  = layers[i].getWeights();
-		}
-
-		return weights;
-	}
-
-	public double[][] getBiases(){
-		double[][] biases = new double[layers.length][];
-
-		for(int i = 0; i < layers.length; i++){
-			biases[i] = layers[i].getBiases();
-		}
-
-		return biases;
-	}
-
-	public double[][][] getHiddenWeights(){
-		double[][][] hiddenWeights = new double[layers.length][][];
-
-		for(int i = 0; i < layers.length; i++){
-			hiddenWeights[i] = layers[i].getHiddenWeights();
-		}
-
-		return hiddenWeights;
-	}
-
-}
-
-class NeuralLayer{
-
-	//FIRST WEIGHTS DIMENSION: OUTPUT NUMBER
-	//SECOND WEIGHTS DIMENSION: INPUT NUMBER
-
-	//BIAS DIMESION: OUTPUT NUMBER
-
-	//FIRST HIDDEN WIEGHTS DIMENSION: INPUT NUMBER
-	//SECOND HIDDEN WEIGHTS DIMENSION: OUTPUT NUMBER
-
-	private static Random rand;
-	private double[][] weights;
-	private double[] biases;
-	private double[][] hiddenWeights;
-	private double[] hiddenInputs;
-
-	public static void setRandom(Random rand){
-		NeuralLayer.rand = rand;
-	}
-
-	public NeuralLayer(int inputs, int outputs){
-		genWeights(inputs, outputs);
-		genBiases(outputs);
-		genHiddenWeights(inputs, outputs);
-		this.hiddenInputs = new double[inputs];
-	}
-
-	public NeuralLayer(double[][] weights, double[] biases, double[][] hiddenWeights){
-		this.weights = weights;
-		this.biases = biases;
-		this.hiddenWeights = hiddenWeights;
-		this.hiddenInputs = new double[hiddenWeights.length];
-
-		if(biases.length != weights.length){
-			throw new RuntimeException("Dimension mismatch between biases and weights!");
-		}
-
-		if(hiddenWeights.length != weights[0].length || hiddenWeights[0].length != weights.length){
-			throw new RuntimeException("Dimension mismatch between hidden weights and weights!");
-		}
-
-	}
-
-	public NeuralLayer(double[][] weights, double[] biases){
-		this.weights = weights;
-		this.biases = biases;
-
-		if(biases.length != weights.length){
-			throw new RuntimeException("Dimension mismatch between biases and weights!");
-		}
-
-	}
-
-	public void genWeights(int inputs, int outputs){
-		weights = new double[outputs][inputs];
-
-		for(int i = 0; i < outputs; i++){
-
-			for(int j = 0; j < inputs; j++){
-				weights[i][j] = rand.nextGaussian();
-			}
-
-		}
-
-	}
-
-	public void genBiases(int outputs){
-		biases = new double[outputs];
-
-		for(int i = 0; i < outputs; i++){
-			biases[i] = rand.nextGaussian();
-		}
-
-	}
-
-	public void genHiddenWeights(int inputs, int outputs){
-		hiddenWeights = new double[inputs][outputs];
-
-		for(int i = 0; i < inputs; i++){
-
-			for(int j = 0; j < outputs; j++){
-				hiddenWeights[i][j] = rand.nextGaussian();
-			}
-
-		}
-
-	}
-
-	private double ReLU(double input){
-		
-		if(input > 0){
-			return input;
-		} else{
-			return 0;
-		}
-
-	}
-
-	public double[] passThru(double[] inputs){
-
-		if(inputs.length != weights[0].length){
-			throw new RuntimeException("Dimension mismatch between inputs and weights!");
-		}
-
-		double[] outputs = new double[weights.length];
-
-		for(int i = 0; i < weights.length; i++){
-
-			for(int j = 0; j < inputs.length; j++){
-				outputs[i] += weights[i][j] * inputs[j];
-			}
-
-			outputs[i] += biases[i];
-			outputs[i] = ReLU(outputs[i]);
-		}
-
-		return outputs;
-	}
-
-	public double[] recurrentPassThru(double[] inputs){
-
-		if(inputs.length != weights[0].length){
-			throw new RuntimeException("Dimension mismatch between inputs and weights!");
-		}
-
-		if(hiddenWeights == null){
-			throw new RuntimeException("Network layer is not recurrent!");
-		}
-
-		double[] outputs = new double[weights.length];
-
-		for(int i = 0; i < weights.length; i++){
-
-			for(int j = 0; j < inputs.length; j++){
-				outputs[i] += weights[i][j] * (inputs[j] + hiddenInputs[j]);
-				hiddenInputs[j] = 0;
-			}
-
-			outputs[i] += biases[i];
-			outputs[i] = ReLU(outputs[i]);
-
-			for(int j = 0; j < inputs.length; j++){
-				hiddenInputs[j] += outputs[i] * hiddenWeights[j][i];
-			}
-
-		}
-
-		return outputs;
-	}
-
-	public void resetHidden(){
-		this.hiddenInputs = new double[hiddenWeights.length];
-	}
-
-	public double[][] getHiddenWeights(){return hiddenWeights;}
-	public double[][] getWeights(){return weights;}
-	public double[] getBiases(){return biases;}
 }
