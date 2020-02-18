@@ -1,5 +1,7 @@
 public enum ActivationFunction{
-	ReLU,
-	Sigmoid,
-	Tanh,
+	RELU,
+	LEAKY_RELU,
+	SIGMOID,
+	TANH,
+	SOFTMAX,
 }

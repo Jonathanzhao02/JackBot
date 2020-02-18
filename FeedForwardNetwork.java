@@ -1,27 +1,33 @@
 public class FeedForwardNetwork extends GenericNetwork{
 
-	public FeedForwardNetwork(int[] architecture, int inputs, ActivationFunction activationFunction){
-		layers = new NeuralLayer[architecture.length];
-		layers[0] = new NeuralLayer(inputs, architecture[0], activationFunction);
+	public FeedForwardNetwork(int[] architecture, int inputs, ActivationFunction[] activationFunctions, LossFunction lossFunction){
+		layers = new NodeLayer[architecture.length];
+		layers[0] = new NodeLayer(inputs, architecture[0], activationFunctions[0]);
 
-		for(int i = 1; i < architecture.length; i++){
-			layers[i] = new NeuralLayer(architecture[i - 1], architecture[i], activationFunction);
+		if(architecture.length > 1){
+
+			for(int i = 1; i < architecture.length; i++){
+				layers[i] = new NodeLayer(architecture[i - 1], architecture[i], activationFunctions[i]);
+			}
+
 		}
 
+		this.lossFunction = lossFunction;
 	}
 
-	public FeedForwardNetwork(double[][][] weights, double[][] biases, ActivationFunction activationFunction){
+	public FeedForwardNetwork(double[][][] weights, double[][] biases, ActivationFunction[] activationFunctions, LossFunction lossFunction){
 
 		if(weights.length != biases.length){
-			throw new RuntimeException("Dimensions mismatch between weights and biases!");
+			throw new RuntimeException("Dimensions mismatch between weights " + weights.length + " and biases " + biases.length + "!");
 		}
 
-		layers = new NeuralLayer[weights.length];
+		layers = new NodeLayer[weights.length];
 
 		for(int i = 0; i < weights.length; i++){
-			layers[i] = new NeuralLayer(weights[i], biases[i], activationFunction);
+			layers[i] = new NodeLayer(weights[i], biases[i], activationFunctions[i]);
 		}
 
+		this.lossFunction = lossFunction;
 	}
 
 }
