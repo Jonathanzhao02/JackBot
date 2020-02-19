@@ -138,12 +138,10 @@ public class NodeLayer extends NeuralLayer{
 			throw new RuntimeException("Gradient dims " + weights.length + "x" + weights[0].length + " does not match weights dims " + this.weights.length + "x" + this.weights[0].length + "!");
 		}
 
-		for(int i = 0; i < weights.length; i++){
+		this.weights = MatrixOps.pointwiseSubtract(this.weights, MatrixOps.scalarMult(weights, GenericNetwork.LEARNING_RATE));
 
-			for(int j = 0; j < weights[0].length; j++){
-				this.weights[i][j] -= weights[i][j] * GenericNetwork.GRADIENT_DELTA;
-			}
-
+		if(GenericNetwork.WEIGHT_DECAY < 1){
+			this.weights = MatrixOps.scalarMult(this.weights, GenericNetwork.WEIGHT_DECAY);
 		}
 
 	}
@@ -154,8 +152,10 @@ public class NodeLayer extends NeuralLayer{
 			throw new RuntimeException("Gradient length " + biases.length + " does not match biases length " + this.biases.length + "!");
 		}
 
-		for(int i = 0; i < biases.length; i++){
-			this.biases[i] -= biases[i] * GenericNetwork.GRADIENT_DELTA;
+		this.biases = MatrixOps.pointwiseSubtract(this.biases, MatrixOps.scalarMult(biases, GenericNetwork.LEARNING_RATE));
+
+		if(GenericNetwork.WEIGHT_DECAY < 1){
+			this.biases = MatrixOps.scalarMult(this.biases, GenericNetwork.WEIGHT_DECAY);
 		}
 
 	}

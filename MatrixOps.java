@@ -130,6 +130,42 @@ public class MatrixOps{
 		return newTen;
 	}
 
+	public static double[] pointwiseSubtract(double[] vec1, double[] vec2){
+		checkDimMatch(vec1, vec2);
+
+		double[] newVec = new double[vec1.length];
+
+		for(int i = 0; i < vec1.length; i++){
+			newVec[i] = vec1[i] - vec2[i];
+		}
+
+		return newVec;
+	}
+
+	public static double[][] pointwiseSubtract(double[][] mat1, double[][] mat2){
+		checkDimMatch(mat1, mat2);
+
+		double[][] newMat = new double[mat1.length][mat1[0].length];
+
+		for(int i = 0; i < mat1.length; i++){
+			newMat[i] = pointwiseSubtract(mat1[i], mat2[i]);
+		}
+
+		return newMat;
+	}
+
+	public static double[][][] pointwiseSubtract(double[][][] ten1, double[][][] ten2){
+		checkDimMatch(ten1, ten2);
+
+		double[][][] newTen = new double[ten1.length][ten1[0].length][ten1[0][0].length];
+
+		for(int i = 0; i < ten1.length; i++){
+			newTen[i] = pointwiseSubtract(ten1[i], ten2[i]);
+		}
+
+		return newTen;
+	}
+
 	public static double[] pointwiseMult(double[] vec1, double[] vec2){
 		checkDimMatch(vec1, vec2);
 
